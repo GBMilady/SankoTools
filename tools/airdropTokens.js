@@ -37,6 +37,18 @@ const argv = yargs(hideBin(process.argv))
     type: 'boolean',
     conflicts: ['erc20', 'erc721']
   })
+  .option('batch', {
+    alias: 'b',
+    description: 'Number of transfers to batch in a single tx',
+    type: 'number',
+    default: 500,
+    coerce: (arg) => {
+        if (arg < 1 || arg > 2000) {
+            throw new Error('Batch size must be between 1 and 2000');
+        }
+        return arg;
+    }
+  })
   .check(argv => {
     if (!argv.erc20 && !argv.erc721 && !argv.erc1155) {
       throw new Error('One of --erc20, --erc721, or --erc1155 must be specified');
@@ -170,7 +182,7 @@ function readRecipientsFromCSV(filePath, type) {
     const progressBar = new cliProgress.SingleBar({}, cliProgress.Presets.shades_classic);
     progressBar.start(recipients.length, 0);
 
-    const batchSize = 500; // Adjust this value based on your gas and calldata limits
+    const batchSize = argv.batch ? argv.batch : 500;
 
     if (type === 'erc20') {
       const totalAmount = recipients.reduce((acc, recipient) => acc.add(ethers.utils.parseUnits(recipient.amount, 18)), ethers.BigNumber.from(0));

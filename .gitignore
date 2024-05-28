@@ -6,3 +6,5 @@ tables_report.png
 SankoPetBreakdown.png
 .DS_Store
 .env
+*.json
+*.txt

@@ -17,10 +17,11 @@ CSV formatting must be in the form of:
 *   `--erc20` Airdrop ERC20 tokens. Conflicts with --erc721 and --erc1155
 *   `--erc721` Airdrop ERC721 tokens. Conflicts with --erc20 and --erc1155
 *   `--erc1155` Airdrop ERC1155 tokens. Conflicts with --erc20 and --erc721
+*   `--batch, -b` Number of transfers to batch in a single tx, defaults to 500, min: 1 max: 2000
 
 ### Usage
 
-```node tools/airdropTokens.js --token <contractAddress> --to <csvFile> [--erc20 | --erc721 | --erc1155]```
+```node tools/airdropTokens.js --token <contractAddress> --to <csvFile> [--erc20 | --erc721 | --erc1155] [--batch <1-2000>]```
 
 # Sanko Pets Tools
 ## tools/tallySankoPets.js
