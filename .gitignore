@@ -1,0 +1,8 @@
+node_modules
+dist
+*.csv
+SankoPetCache.json
+tables_report.png
+SankoPetBreakdown.png
+.DS_Store
+.env

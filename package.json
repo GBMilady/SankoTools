@@ -1,0 +1,23 @@
+{
+  "name": "sankotools",
+  "version": "1.0.0",
+  "description": "Assorted toolbox and scripts for Sanko Mainnet",
+  "type": "module",
+  "scripts": {},
+  "dependencies": {
+    "cli-progress": "^3.12.0",
+    "cli-table": "^0.3.11",
+    "csv-parser": "^3.0.0",
+    "csv-write-stream": "^2.0.0",
+    "csv-writer": "^1.6.0",
+    "dotenv": "^16.4.5",
+    "ethers": "^6.12.1",
+    "puppeteer": "^22.10.0",
+    "yargs": "^17.7.2"
+  },
+  "devDependencies": {
+    "@types/cli-table": "^0.3.4",
+    "@types/node": "^20.12.12",
+    "typescript": "^5.4.5"
+  }
+}
