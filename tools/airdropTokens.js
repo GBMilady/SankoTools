@@ -5,6 +5,7 @@ import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 import cliProgress from 'cli-progress';
 import dotenv from 'dotenv';
+import sanko from './util/sanko.js';
 
 dotenv.config();
 
@@ -60,7 +61,7 @@ const argv = yargs(hideBin(process.argv))
   .argv;
 
 const jsonRpcUrl = "https://mainnet.sanko.xyz";
-const provider = new ethers.providers.JsonRpcProvider(jsonRpcUrl);
+const provider = new ethers.JsonRpcProvider(jsonRpcUrl, sanko, { staticNetwork: sanko });
 
 const privateKey = process.env.PRIVATE_KEY;
 if (!privateKey) {
@@ -98,8 +99,8 @@ async function airdropERC20(recipients, batchSize, progressBar) {
   for (let i = 0; i < recipients.length; i += batchSize) {
     const batch = recipients.slice(i, i + batchSize);
     const addresses = batch.map(recipient => recipient.address);
-    const amounts = batch.map(recipient => ethers.utils.parseUnits(recipient.amount, 18));
-    const totalAmount = amounts.reduce((acc, amount) => acc.add(amount), ethers.BigNumber.from(0));
+    const amounts = batch.map(recipient => ethers.parseUnits(recipient.amount, 18));
+    const totalAmount = amounts.reduce((acc, amount) => acc.add(amount), BigInt(0));
     
     try {
       const tx = await gasliteDropContract.airdropERC20(tokenAddress, addresses, amounts, totalAmount);
@@ -138,7 +139,7 @@ async function airdropERC1155(recipients, batchSize, progressBar) {
     const batch = recipients.slice(i, i + batchSize);
     const addresses = batch.map(recipient => recipient.address);
     const ids = batch.map(recipient => recipient.tokenId);
-    const amounts = batch.map(recipient => ethers.utils.parseUnits(recipient.amount, 18));
+    const amounts = batch.map(recipient => ethers.parseUnits(recipient.amount, 18));
     
     try {
       const tx = await gasliteDropContract.airdropERC1155(tokenAddress, addresses, ids, amounts, "0x");
@@ -185,7 +186,7 @@ function readRecipientsFromCSV(filePath, type) {
     const batchSize = argv.batch ? argv.batch : 500;
 
     if (type === 'erc20') {
-      const totalAmount = recipients.reduce((acc, recipient) => acc.add(ethers.utils.parseUnits(recipient.amount, 18)), ethers.BigNumber.from(0));
+      const totalAmount = recipients.reduce((acc, recipient) => acc.add(ethers.parseUnits(recipient.amount, 18)), BigInt(0));
       await setAllowance(totalAmount);
       await airdropERC20(recipients, batchSize, progressBar);
     } else if (type === 'erc721') {
