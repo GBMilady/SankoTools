@@ -2,9 +2,24 @@
 Assorted random tools and scripts for use on **Sanko Mainnet**
 
 # Sanko Mainnet Tools
+## tools/takeSnapshot.js
+
+Generates a snapshot of token holders for a given ERC20, ERC721, or ERC1155 contract. Saves the snapshot as JSON or CSV format.
+
+### Arguments
+
+*   `--contract, -c` (required): Contract address of an ERC20, ERC721, or ERC1155 token
+*   `--block, -b` Contract creation block (if known), if a snapshot has already been taken it will use the previously saved block, if this is a first run on a contract, not specifying the creation block is not recommended as the entire history of Sanko will get iterated over and you'll be waiting a long time. Just get it from the [block explorer](https://explorer.sanko.xyz).
+*   `--csv` Save snapshot in CSV format
+*   `--refresh` Refresh holder data from the creation block if snapshot data already exists
+
+### Usage
+
+```node tools/takeSnapshot.js --contract <contractAddress> [--block <creationBlock>] [--csv] [--refresh]```
+
 ## tools/airdropTokens.js
 
-This script facilitates the airdrop of ERC20, ERC721, or ERC1155 tokens to multiple wallet addresses specified in a CSV file. Utilizes a self-deployed contract of Gaslite Drop to facilitate batch transactions until support is added to the native tool.
+Airdrop ERC20, ERC721, or ERC1155 tokens to multiple wallet addresses from a given CSV file. Utilizes a self-deployed contract of Gaslite Drop to facilitate batch transactions until support is added to the native tool.
 
 CSV formatting must be in the form of:
 
