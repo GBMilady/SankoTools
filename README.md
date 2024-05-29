@@ -37,7 +37,7 @@ Reads multiple CSV files containing addresses and token balances (as is generate
 
 ### Usage
 
-    node tools/createAirdropList.js --files <file1.csv file2.csv ...> --total <total_amount> [--equal | --weighted --weight-scale <scale> --minimum <minimum_amount> --maximum <maximum_amount>]
+```node tools/createAirdropList.js --files <file1.csv file2.csv ...> --total <total_amount> [--equal | --weighted --weight-scale <scale> --minimum <minimum_amount> --maximum <maximum_amount>]```
 
 ## tools/airdropTokens.js - Airdrop Do-er
 
