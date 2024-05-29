@@ -61,7 +61,7 @@ const argv = yargs(hideBin(process.argv))
   .argv;
 
 const jsonRpcUrl = "https://mainnet.sanko.xyz";
-const provider = new ethers.JsonRpcProvider(jsonRpcUrl, sanko, { staticNetwork: sanko });
+const provider = new ethers.JsonRpcProvider(jsonRpcUrl, sanko);
 
 const privateKey = process.env.PRIVATE_KEY;
 if (!privateKey) {
@@ -87,7 +87,7 @@ async function setAllowance(totalAmount) {
 
   try {
     const tx = await tokenContract.approve(contractAddress, totalAmount);
-    console.log(`Approval transaction sent: ${tx.hash}`);
+    console.log(`Approval for ${totalAmount} sent: ${tx.hash}`);
     await tx.wait();
     console.log('Token allowance set successfully.');
   } catch (error) {
@@ -99,14 +99,15 @@ async function airdropERC20(recipients, batchSize, progressBar) {
   for (let i = 0; i < recipients.length; i += batchSize) {
     const batch = recipients.slice(i, i + batchSize);
     const addresses = batch.map(recipient => recipient.address);
-    const amounts = batch.map(recipient => ethers.parseUnits(recipient.amount, 18));
-    const totalAmount = amounts.reduce((acc, amount) => acc.add(amount), BigInt(0));
-    
+    const amounts = batch.map(recipient => ethers.parseUnits(recipient.amount, "ether"));
+    const totalAmount = amounts.reduce((acc, amount) => acc + amount, BigInt(0));
+
     try {
-      const tx = await gasliteDropContract.airdropERC20(tokenAddress, addresses, amounts, totalAmount);
-      console.log(`Airdrop transaction sent: ${tx.hash}`);
+      // const callResult = await gasliteDropContract.airdropERC20.staticCall(tokenAddress, addresses, amounts, totalAmount);
+      const gasEstimate = await gasliteDropContract.airdropERC20.estimateGas(tokenAddress, addresses, amounts, totalAmount);
+      const tx = await gasliteDropContract.airdropERC20(tokenAddress, addresses, amounts, totalAmount, { gasLimit: gasEstimate });
+      // console.log(`Airdrop transaction sent: ${tx.hash}`);
       await tx.wait();
-      console.log('Airdrop completed successfully.');
     } catch (error) {
       console.error('Error during airdrop:', error);
     }
@@ -125,7 +126,6 @@ async function airdropERC721(recipients, batchSize, progressBar) {
       const tx = await gasliteDropContract.airdropERC721(tokenAddress, addresses, tokenIds);
       console.log(`Airdrop transaction sent: ${tx.hash}`);
       await tx.wait();
-      console.log('Airdrop completed successfully.');
     } catch (error) {
       console.error('Error during airdrop:', error);
     }
@@ -139,13 +139,12 @@ async function airdropERC1155(recipients, batchSize, progressBar) {
     const batch = recipients.slice(i, i + batchSize);
     const addresses = batch.map(recipient => recipient.address);
     const ids = batch.map(recipient => recipient.tokenId);
-    const amounts = batch.map(recipient => ethers.parseUnits(recipient.amount, 18));
+    const amounts = batch.map(recipient => ethers.parseUnits(recipient.amount, "ether"));
     
     try {
       const tx = await gasliteDropContract.airdropERC1155(tokenAddress, addresses, ids, amounts, "0x");
       console.log(`Airdrop transaction sent: ${tx.hash}`);
       await tx.wait();
-      console.log('Airdrop completed successfully.');
     } catch (error) {
       console.error('Error during airdrop:', error);
     }
@@ -158,14 +157,20 @@ function readRecipientsFromCSV(filePath, type) {
   return new Promise((resolve, reject) => {
     const recipients = [];
     fs.createReadStream(filePath)
-      .pipe(csv())
+      .pipe(csv({ headers: false }))
       .on('data', (row) => {
+        const values = Object.values(row);
+        const address = values[0];
         if (type === 'erc20') {
-          recipients.push({ address: row.address, amount: row.amount });
+          const amount = values[1];
+          recipients.push({ address, amount });
         } else if (type === 'erc721') {
-          recipients.push({ address: row.address, tokenId: row.tokenId });
+          const tokenId = values[1];
+          recipients.push({ address, tokenId });
         } else if (type === 'erc1155') {
-          recipients.push({ address: row.address, tokenId: row.tokenId, amount: row.amount });
+          const tokenId = values[1];
+          const amount = values[2];
+          recipients.push({ address, tokenId, amount });
         }
       })
       .on('end', () => {
@@ -181,17 +186,24 @@ function readRecipientsFromCSV(filePath, type) {
     const recipients = await readRecipientsFromCSV(argv.to, type);
 
     const progressBar = new cliProgress.SingleBar({}, cliProgress.Presets.shades_classic);
-    progressBar.start(recipients.length, 0);
 
     const batchSize = argv.batch ? argv.batch : 500;
 
     if (type === 'erc20') {
-      const totalAmount = recipients.reduce((acc, recipient) => acc.add(ethers.parseUnits(recipient.amount, 18)), BigInt(0));
+      const totalAmount = recipients.reduce((acc, recipient) => 
+        acc + ethers.parseUnits(recipient.amount, 'ether'), BigInt(0));
+      
       await setAllowance(totalAmount);
+
+      console.log(`IT'S AIRDROP TIME!!!\n`);
+
+      progressBar.start(recipients.length, 0);
       await airdropERC20(recipients, batchSize, progressBar);
     } else if (type === 'erc721') {
+      progressBar.start(recipients.length, 0);
       await airdropERC721(recipients, batchSize, progressBar);
     } else if (type === 'erc1155') {
+      progressBar.start(recipients.length, 0);
       await airdropERC1155(recipients, batchSize, progressBar);
     }
 
